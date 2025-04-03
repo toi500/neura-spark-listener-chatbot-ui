@@ -1,4 +1,5 @@
-FROM node:18-bookworm # Or stick with node:18-buster if needed
+# CORRECT First Line: Specifies the base image
+FROM node:18-bookworm
 
 WORKDIR /app
 
@@ -28,11 +29,10 @@ RUN npx prisma generate
 # Build the application
 RUN npm run build
 
-# Expose the port the application ACTUALLY listens on
+# Expose the port the application ACTUALLY listens on (ensure this matches app startup)
 EXPOSE 4173
 
 # Define the command to run when the container starts
 # 1. Apply DB migrations (prisma db push is okay for SQLite on start)
 # 2. Start the application preview server (ensure package.json preview script targets port 4173)
 CMD ["sh", "-c", "npx prisma db push && npm run preview"]
-# Using shell form `sh -c` allows running multiple commands easily
