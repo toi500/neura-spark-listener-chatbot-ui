@@ -2,74 +2,36 @@
 version: '3.8'
 
 services:
-  # Service name - used internally by compose
-  # Coolify might use 'app' or this name depending on detection
-  neura_spark_listener:
+  # Service name MUST be 'app' for Coolify Git deployments using Compose build pack
+  app: # <--- RENAMED FROM neura_spark_listener
     # --- Build Configuration ---
-    # Build from the Dockerfile in the current directory (repo root)
     build:
       context: .
-      dockerfile: dockerfile # Make sure filename matches exactly (e.g., Dockerfile vs dockerfile)
+      dockerfile: dockerfile # Make sure filename matches exactly
 
-    # --- image: REMOVED ---
-    # Removed the pre-built image line to force build from source defined above.
-    # image: meetneuraai/neura-open-source-ui:v0.2.8 # <-- REMOVED
-
-    # --- container_name: Optional ---
-    # Coolify often overrides this in Git deployments. Can be removed or left.
-    # container_name: ${CONTAINER_NAME}
-
-    # --- restart policy ---
+    # --- Runtime Configuration ---
     restart: always # Or 'unless-stopped'
 
-    # --- ports: REMOVED ---
-    # Removed direct port exposure. Access will be via Coolify proxy and FQDN.
-    # ports:
-    #  - "${VITE_PORT}:4173" # <-- REMOVED
-
     # --- Volumes ---
-    # Use named volumes for persistent data managed by Docker/Coolify.
     volumes:
-      # Volume for the Prisma database directory
       - prisma_data:/app/prisma
-      # Volume for generated audio data (assuming it needs persistence)
       - audio_data:/app/data/audio
-      # NOTE: Static assets from './public' should ideally be copied
-      # into the image via the Dockerfile 'COPY' command during build.
-      # - ./public:/app/public # <-- REMOVED (Handle in Dockerfile)
 
     # --- Environment Variables ---
-    # Define variables expected by your application.
-    # Coolify injects values set in the UI Environment Variables section.
     environment:
       # --- REQUIRED ---
-      # Ensure this path matches where the app expects the DB inside the container
       DATABASE_URL: "file:/app/prisma/dev.db"
-
-      # Add ALL other required environment variables using ${VAR_NAME} syntax.
-      # Coolify will populate these from the UI settings. Examples:
-      - VITE_GROQ_API_KEY=${VITE_GROQ_API_KEY}
-      - VITE_OPENAI_API_KEY=${VITE_OPENAI_API_KEY}
-      - VITE_CLAUDE_API_KEY=${VITE_CLAUDE_API_KEY}
-      - VITE_FLOWISE_API_KEY=${VITE_FLOWISE_API_KEY}
-      - VITE_OPENROUTER_API_KEY=${VITE_OPENROUTER_API_KEY}
-      - VITE_GOOGLE_API_KEY=${VITE_GOOGLE_API_KEY}
-      # ... include ALL others from your original file (NEURA, FLOWISE_URL, AZURE, TTS etc.)
-
-      # --- Optional with Defaults ---
-      - VITE_BACKEND_SERVICE_PROVIDER=${VITE_BACKEND_SERVICE_PROVIDER}
-      - VITE_GROQ_API_MODEL=${VITE_GROQ_API_MODEL}
-      - VITE_STREAM_ENABLED=${VITE_STREAM_ENABLED}
-      # ... include ALL others
+      # ... ALL your other VITE_ variables using ${VAR_NAME} ...
+      VITE_GROQ_API_KEY: ${VITE_GROQ_API_KEY}
+      VITE_OPENAI_API_KEY: ${VITE_OPENAI_API_KEY}
+      # ... etc ...
 
       # --- NODE_ENV ---
-      NODE_ENV: production # Recommended
+      NODE_ENV: production
 
       # --- IMPORTANT: Internal Port ---
-      # Although not explicitly defined here, your application seems to listen
-      # internally on port 4173 (based on previous logs/config).
-      # You MUST set the 'Port' field in the Coolify Application UI to 4173
-      # so the proxy knows where to route traffic.
+      # Ensure app listens on 4173 and set Port=4173 in Coolify UI
+      # PORT: 4173 # Can optionally define here, but UI setting is primary for proxy
 
     # --- Logging Configuration ---
     logging:
@@ -87,7 +49,6 @@ services:
           memory: 2G
 
 # --- Named Volume Definitions ---
-# Declare the named volumes used above. Docker/Coolify will create them.
 volumes:
   prisma_data:
   audio_data:
